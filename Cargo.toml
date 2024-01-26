@@ -1,13 +1,16 @@
 [package]
-name = "obfstr"
+name = "obfuscate"
 version = "0.4.3"
 edition = "2021"
 license = "MIT"
 
-authors = ["Casper <CasualX@users.noreply.github.com>"]
+authors = [
+    "ellacrity <ellacrity@users.noreply.github.com>",
+    "Casper <CasualX@users.noreply.github.com>",
+]
 description = "Compiletime string constant obfuscation for Rust"
-documentation = "https://docs.rs/obfstr"
-repository = "https://github.com/CasualX/obfstr"
-readme = "readme.md"
+documentation = "https://docs.rs/obfuscate"
+repository = "https://github.com/ellacrityX/obfuscate"
+readme = "README.md"
 keywords = ["obfuscation", "hash", "random", "wide"]
 categories = ["no-std"]

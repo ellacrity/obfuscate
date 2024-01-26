@@ -1,0 +1,64 @@
+# https://taskfile.dev
+
+version: "3"
+
+dotenv:
+  - ".env"
+
+tasks:
+  default:
+    cmds:
+      - cmd: task --list-all
+
+  ci:lint:
+    desc: CI task - Run Clippy to lint the project, checking for errors
+    cmds:
+      - cmd: cargo clippy --workspace --release --quiet --all-features -- -D warnings
+
+  ci:fmt:
+    desc: CI task - Run rustfmt to format the project
+    cmd: cargo fmt --all --check
+
+  ci:test:
+    desc: CI task - Run test suite, bailing on failure
+    cmd: cargo test --release --quiet
+
+  ci:all:
+    desc: Run all local CI tasks (useful for pre-commit)
+    cmds:
+      - task: build:release
+      - task: ci:test
+      - task: ci:fmt
+      - task: ci:lint
+
+  build:
+    desc: Build the Rust workspace
+    cmd: cargo build --verbose
+
+  build:release:
+    desc: Build the Rust workspace with optimizations
+    cmd: cargo build --verbose --release
+
+  build:all:
+    desc: Build the Rust workspace in both 'debug' and 'release' mode
+    cmds:
+      - task: build
+      - task: build:release
+
+  rebuild:
+    desc: Clean and rebuild the Rust workspace
+    cmds:
+      - task: build
+      - task: build:release
+
+  rebuild:release:
+    desc: Clean and rebuild the Rust workspace with optimizations
+    cmds:
+      - task: build
+      - task: build:release
+
+  rebuild:all:
+    desc: Clean and rebuild the Rust workspace in both 'debug' and 'release' mode
+    cmds:
+      - task: build
+      - task: build:release
