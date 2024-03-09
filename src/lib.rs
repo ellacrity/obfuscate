@@ -261,7 +261,7 @@ pub const fn entropy(string: &str) -> u64 {
 /// automatically.
 pub const SEED: u64 = splitmix(hash(match option_env!("ENTROPY_SEED") {
     Some(seed) => seed,
-    None => panic!("ENTROPY_SEED_VALUE environment variable is required."),
+    None => "FIXED",
 }) as u64);
 
 //----------------------------------------------------------------
