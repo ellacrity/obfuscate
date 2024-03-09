@@ -30,11 +30,7 @@ macro_rules! xref {
 
 #[inline(always)]
 const fn non_zero(rand: u32) -> u32 {
-    if rand == 0 {
-        1
-    } else {
-        rand
-    }
+    if rand == 0 { 1 } else { rand }
 }
 
 #[inline(always)]

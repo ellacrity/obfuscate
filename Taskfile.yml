@@ -2,63 +2,131 @@
 
 version: "3"
 
-dotenv:
-  - ".env"
+# Load environment variables from .env file.
+# set dotenv-load := true
+
+vars:
+  RELEASE_MODE: "--release"
+  COMPILER_TARGET: "x86_64-pc-windows-msvc"
+  RUST_TOOLCHAIN: "nightly"
+  SHELL_CMD: "pwsh -NoProfile -NoLogo -Command"
 
 tasks:
   default:
     cmds:
-      - cmd: task --list-all
+      - task --list-all
+    silent: false
 
-  ci:lint:
-    desc: CI task - Run Clippy to lint the project, checking for errors
-    cmds:
-      - cmd: cargo clippy --workspace --release --quiet --all-features -- -D warnings
+  show-target: echo "{{.COMPILER_TARGET}} with {{ rust_toolchain }} toolchain"
 
-  ci:fmt:
-    desc: CI task - Run rustfmt to format the project
-    cmd: cargo fmt --all --check
+  # Bootstrap environment, verifying all tools are installed
+  bootstrap: rustup default {{ rust_toolchain }}
+    cargo binstall cargo-audit cargo-expand cargo-watch
 
-  ci:test:
-    desc: CI task - Run test suite, bailing on failure
-    cmd: cargo test --release --quiet
-
-  ci:all:
-    desc: Run all local CI tasks (useful for pre-commit)
-    cmds:
-      - task: build:release
-      - task: ci:test
-      - task: ci:fmt
-      - task: ci:lint
+  # Run benchmark suite
+  bench: cargo +nightly bench
 
   build:
-    desc: Build the Rust workspace
-    cmd: cargo build --verbose
+    desc: Build project with 'dev' profile
+    cmd: cargo build --workspace --all-targets
 
-  build:release:
-    desc: Build the Rust workspace with optimizations
-    cmd: cargo build --verbose --release
+  build-release:v:
+    desc: Build project with 'release' profile
+    cmd: cargo build --workspace --all-targets --release
+
+  build:v:
+    desc: Build project with 'dev' profile with verbosity ON
+    cmd: cargo build -vv
 
   build:all:
-    desc: Build the Rust workspace in both 'debug' and 'release' mode
+    desc: Build project with 'dev' and 'release' profiles
     cmds:
       - task: build
-      - task: build:release
+      - task: build-release
+
+  check:
+    desc: Compile, test and lint project, failing on error
+    cmds:
+      - task: format
+      - task: test:quiet
+      - task: test:release
+      - task: lint
+
+  clean:
+    desc: Remove build artifacts
+    cmd: cargo clean -vv
+
+  compile:
+    desc: Compile project
+    cmd: cargo check --workspace --all-targets
+
+  docs:
+    desc: Build documentation, opening in a browser
+    cmd: cargo +nightly doc --workspace --all-features --no-deps --open
+
+  docs:all:
+    desc: Build documentation, opening in a browser
+    cmd: cargo +nightly doc --workspace --all-features --no-deps --document-private-items --open
+
+  format:
+    desc: Format the project using Rustfmt
+    cmd: cargo +nightly fmt --all -- --check
+
+  miri:
+    desc: Run tests against Miri
+    cmd: cargo +nightly miri test
+
+  miri-verbose:
+    desc: Run tests against Miri (verbose mode)
+    cmd: cargo +nightly miri test -- --nocapture
+
+  lint:
+    desc: Lint project with clippy
+    cmd: cargo +nightly clippy --workspace --all-targets -- -D warnings
 
   rebuild:
-    desc: Clean and rebuild the Rust workspace
+    desc: Rebuild project from scratch
     cmds:
+      - task: clean
       - task: build
-      - task: build:release
+      - task: build-release
 
-  rebuild:release:
-    desc: Clean and rebuild the Rust workspace with optimizations
-    cmds:
-      - task: build
-      - task: build:release
+  run:
+    desc: Run a binary with the given name (CLI_ARGS)
+    cmd: cargo run --bin {{.CLI_ARGS}}
 
-  rebuild:all:
-    desc: Clean and rebuild the Rust workspace in both 'debug' and 'release' mode
+  example:
+    desc: Run an example with the given name (CLI_ARGS)
+    cmd: cargo run --example {{.CLI_ARGS}}
+
+  test:quiet:
+    desc: Run test suite
+    cmd: cargo test --workspace --all-targets --quiet
+
+  test:release:
+    desc: Run test suite (release mode)
+    cmd: cargo test --workspace --all-targets --quiet --release
+
+  test:verbose:
+    desc: Run test suite (debug mode with multi-threaded environment)
+    cmd: cargo test --workspace --all-targets -- --nocapture
+
+  test:debug:
+    desc: Run test suite (debug mode with single-threaded environment)
+    cmd: cargo test --workspace --all-targets -- --test-threads=1 --nocapture
+
+  timings:
+    desc: "Get compilation timings [fmt: html, json]"
     cmds:
-      - task: build
-      - task: build:release
+      - task: clean
+      - cmd: cargo build --workspace --all-targets --release -Z timings={{.CLI_ARGS}}
+
+  versions:
+    desc: Show the versions of required build tools
+    cmds:
+      - cmd: rustc --version
+      - cmd: cargo --version
+
+  watch:
+    desc: Run recipe in watch mode, restarting on changes
+    cmd: cargo watch -s "task {{.CLI_ARGS}}"

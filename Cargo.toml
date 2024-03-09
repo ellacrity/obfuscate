@@ -14,3 +14,7 @@ repository = "https://github.com/ellacrityX/obfuscate"
 readme = "README.md"
 keywords = ["obfuscation", "hash", "random", "wide"]
 categories = ["no-std"]
+
+[lib]
+crate-type = ["lib"]
+path = "src/lib.rs"

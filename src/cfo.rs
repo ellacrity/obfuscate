@@ -13,6 +13,7 @@ pub const fn generate<const LEN: usize>(
         xor = crate::murmur3(stmts[i].as_bytes(), key);
         // FIXME! This should check for collisions...
         result[i] = (stmts[i], key, xor);
+
         i += 1;
     }
     result

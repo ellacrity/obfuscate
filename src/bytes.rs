@@ -101,6 +101,24 @@ macro_rules! obfbytes {
 	};
 }
 
+/// Compiletime byte string obfuscation.
+#[macro_export]
+macro_rules! obfcstr {
+    ($(let $name:ident = $s:expr;)*) => {$(
+		$crate::obfbytes! { let $name = $s.to_bytes_with_nul(); }
+		let $name = unsafe { ::core::ffi::CStr::from_bytes_with_nul_unchecked($name) };
+	)*};
+	($name:ident = $s:expr) => {
+		unsafe { ::core::ffi::CStr::from_bytes_with_nul_unchecked($crate::obfbytes!($name = $s.to_bytes_with_nul())) }
+	};
+	($buf:ident <- $s:expr) => {
+		unsafe { ::core::ffi::CStr::from_bytes_with_nul_unchecked($crate::obfbytes!($buf <- $s.to_bytes_with_nul())) }
+	};
+	($s:expr) => {
+		unsafe { ::core::ffi::CStr::from_bytes_with_nul_unchecked($crate::obfbytes!($s.to_bytes_with_nul())) }
+	};
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __obfbytes {

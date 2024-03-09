@@ -37,7 +37,9 @@ fn obfuscate() {
     print(obfuscate::obfstr!("Hello world!"));
     // trace_macros!(false);
     print(obfuscate::obfstr!("AB"));
-    print(obfuscate::obfstr!("This literal is very very very long to see if it correctly handles long strings"));
+    print(obfuscate::obfstr!(
+        "This literal is very very very long to see if it correctly handles long strings"
+    ));
 }
 
 #[inline(never)]

@@ -1,5 +1,8 @@
 //! Compiletime string constant obfuscation.
-#![allow(static_mut_ref)]
+#![feature(strict_provenance)]
+#![deny(fuzzy_provenance_casts)]
+#![deny(lossy_provenance_casts)]
+#![deny(clippy::missing_const_for_fn)]
 #![allow(clippy::ptr_offset_with_cast)]
 #![cfg_attr(not(test), no_std)]
 
@@ -14,7 +17,7 @@ pub mod cfo;
 pub mod hash;
 
 mod murmur3;
-pub use hash::{hash_bytes, hash_cstr, hash_utf8};
+pub use hash::{hash, hash_bytes, hash_cstr, hash_words};
 
 pub use self::murmur3::murmur3;
 
@@ -248,7 +251,7 @@ pub const fn splitmix(seed: u64) -> u64 {
 #[doc(hidden)]
 #[inline(always)]
 pub const fn entropy(string: &str) -> u64 {
-    splitmix(SEED ^ splitmix(hash_utf8(string) as u64))
+    splitmix(SEED ^ splitmix(hash(string) as u64))
 }
 
 /// Compiletime RNG seed.
@@ -256,9 +259,9 @@ pub const fn entropy(string: &str) -> u64 {
 /// This value is derived from the environment variable `ENTROPY_SEED` and has a
 /// fixed value if absent. If it changes all downstream dependents are recompiled
 /// automatically.
-pub const SEED: u64 = splitmix(hash_utf8(match option_env!("ENTROPY_SEED_VALUE") {
+pub const SEED: u64 = splitmix(hash(match option_env!("ENTROPY_SEED") {
     Some(seed) => seed,
-    None => "FIXED",
+    None => panic!("ENTROPY_SEED_VALUE environment variable is required."),
 }) as u64);
 
 //----------------------------------------------------------------
@@ -274,7 +277,11 @@ pub mod words;
 pub fn unsafe_as_str(bytes: &[u8]) -> &str {
     // When used correctly by this crate's macros this should be safe
     #[cfg(debug_assertions)]
-    return str::from_utf8(bytes).unwrap();
+    {
+        core::str::from_utf8(bytes).unwrap()
+    }
     #[cfg(not(debug_assertions))]
-    return unsafe { str::from_utf8_unchecked(bytes) };
+    {
+        unsafe { core::str::from_utf8_unchecked(bytes) }
+    }
 }

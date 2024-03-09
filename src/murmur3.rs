@@ -16,8 +16,7 @@ macro_rules! murmur3 {
     }};
 }
 
-/// MurmurHash3 (32-bit variant) keyed hash function.
-#[doc(hidden)]
+/// MurmurHash3 (32-bit variant) keyed hash function.]
 pub const fn murmur3(input: &[u8], seed: u32) -> u32 {
     let mut h = seed;
     const C1: u32 = 0xCC9E2D51;

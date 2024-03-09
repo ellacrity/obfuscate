@@ -14,7 +14,7 @@ use core::ffi::CStr;
 ///
 /// [DJB2 XOR]: http://www.cse.yorku.ca/~oz/hash.html#djb2
 #[inline(always)]
-pub const fn hash_utf8(source: &str) -> u32 {
+pub const fn hash(source: &str) -> u32 {
     let mut result: u32 = 3581u32;
     let mut index: usize = 0;
     let buf = source.as_bytes();
@@ -85,18 +85,40 @@ pub const fn hash_cstr(buf: &CStr) -> u32 {
     result
 }
 
+/// Hashes a UTF-16 string, returning its hash as a [`u32`].
+#[inline(always)]
+pub const fn hash_words(words: &[u16]) -> u32 {
+    let mut result: u32 = 3581u32;
+    let mut index: usize = 0;
+    while index < words.len() {
+        let word = words[index];
+        let [hi, lo] = word.to_le_bytes();
+        let val = hi | lo;
+        if val == b'\0' {
+            index += 1;
+            continue;
+        }
+
+        let value = (if val <= b'Z' { val + 0x20 } else { val }) as u32;
+        result = result.wrapping_mul(33) ^ value;
+        index += 1;
+    }
+
+    result
+}
+
 /// Compiletime string constant hash.
 ///
 /// Helper macro guarantees compiletime evaluation of the string constant hash.
 ///
 /// ```
 /// const STRING: &str = "Hello World";
-/// assert_eq!(obfuscate::hash_str!(STRING), 0x6520f29d);
+/// assert_eq!(obfuscate::hash!(STRING), 0x6520f29d);
 /// ```
 #[macro_export]
-macro_rules! hash_str {
+macro_rules! hash {
     ($src:expr) => {{
-        const _HASH_VALUE: u32 = $crate::hash_utf8($src);
+        const _HASH_VALUE: u32 = $crate::hash($src);
         _HASH_VALUE
     }};
 }
@@ -107,8 +129,10 @@ macro_rules! hash_str {
 /// hash.
 ///
 /// ```
-/// const STRING: &str = "Hello World";
-/// assert_eq!(obfuscate::hash_str!(STRING), 0x6520f29d);
+/// use core::ffi::CStr;
+///
+/// const STRING: &CStr = c"Hello World";
+/// assert_eq!(obfuscate::hash_cstr!(STRING), 0x6520f29d);
 /// ```
 #[macro_export]
 macro_rules! hash_cstr {
@@ -124,13 +148,30 @@ macro_rules! hash_cstr {
 /// hash.
 ///
 /// ```
-/// const STRING: &str = "Hello World";
-/// assert_eq!(obfuscate::hash_str!(STRING), 0x6520f29d);
+/// const STRING: &[u8] = b"Hello World";
+/// assert_eq!(obfuscate::hash_bytes!(STRING), 0x6520f29d);
 /// ```
 #[macro_export]
 macro_rules! hash_bytes {
     ($src:expr) => {{
         const _HASH_VALUE: u32 = $crate::hash_bytes($src);
+        _HASH_VALUE
+    }};
+}
+
+/// Compiletime byte string constant hash.
+///
+/// This helper macro guarantees compiletime evaluation of the byte string constant
+/// hash.
+///
+/// ```
+/// const STRING: &[u16] = obfuscate::wide!("Hello World");
+/// assert_eq!(obfuscate::hash_words!(STRING), 0x6520f29d);
+/// ```
+#[macro_export]
+macro_rules! hash_words {
+    ($src:expr) => {{
+        const _HASH_VALUE: u32 = $crate::hash_words($src);
         _HASH_VALUE
     }};
 }

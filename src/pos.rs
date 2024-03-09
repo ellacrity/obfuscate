@@ -117,11 +117,7 @@ const fn check(haystack: &[u8], needle: &[u8], offset: usize) -> bool {
 }
 #[inline(always)]
 const fn max(a: usize) -> u8 {
-    if a > 255 {
-        255
-    } else {
-        a as u8
-    }
+    if a > 255 { 255 } else { a as u8 }
 }
 
 #[test]
@@ -132,6 +128,6 @@ fn test_position() {
 
 #[test]
 #[should_panic]
-fn test_position_needle_longer_than_haystack() {
+const fn test_position_needle_longer_than_haystack() {
     let _ = position("haystack", "needleneedleneedle");
 }

@@ -8,19 +8,19 @@ use core::ptr::{read_volatile, write};
 #[macro_export]
 macro_rules! obfwide {
 	($(let $name:ident = $s:expr;)*) => {
-		$(let ref $name = obfwide_impl!($s);)*
+		$(let ref $name = $crate::obfwide_impl!($s);)*
 	};
 	($name:ident = $s:expr) => {{
-		$name = obfwide_impl!($s);
+		$name = $crate::obfwide_impl!($s);
 		&$name
 	}};
 	($buf:ident <- $s:expr) => {{
 		let buf = &mut $buf[..$s.len()];
-		buf.copy_from_slice(&obfwide_impl!($s));
+		buf.copy_from_slice(&$crate::obfwide_impl!($s));
 		buf
 	}};
 	($s:expr) => {
-		&obfwide_impl!($s)
+		&$crate::obfwide_impl!($s)
 	};
 }
 
